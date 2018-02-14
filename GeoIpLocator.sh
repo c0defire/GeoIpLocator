@@ -10,11 +10,12 @@
 # -------------------------- DECLARED VARIABLES -----------------------------------
 #
 # Gets the IP's from your auth.log file, change log file as necessary, user info
-LOG=/var/log/auth.log
 USER=pi
+LOG=/var/log/auth.log
 IPS_OUTPUT=/home/$USER/GeoIpLocator/geoIP.txt
 IPS_SORTED=/home/$USER/GeoIpLocator/sortedips.txt
 IPS_COUNTRY=/home/$USER/GeoIpLocator/country.txt
+IPS_INFO=/home/$USER/GeoIpLocator/IP_information.txt
 #
 # -------------------------- DECLARED VARIABLES -----------------------------------
 #
@@ -27,6 +28,7 @@ IPS_COUNTRY=/home/$USER/GeoIpLocator/country.txt
 # Function Banner - Alias art
 function banner()
 {
+
 cat << "EOF"
 
  ██████╗ ███████╗ ██████╗ ██╗██████╗ ██╗      ██████╗  ██████╗ █████╗ ████████╗ ██████╗ ██████╗
@@ -40,6 +42,7 @@ GeoIPLocator v1.0.0
 Author: C0defire
 
 EOF
+
 }
 
 
@@ -50,7 +53,7 @@ function main()
 echo "Checking your $LOG files for failed attempts ..."
 FAILED_ATTEMPTS=$(sudo cat /var/log/auth.log* | grep "Failed" | cat -n | awk '{ printf $1 "\n" }' | tail -1)
 echo ""
-echo "A total of $FAILED_ATTEMPTS failed attempts were found, sorting common IPs ... "
+echo "A total of $FAILED_ATTEMPTS failed attempts were found, sorting common IPs ..."
 echo ""
 
 sudo cat $LOG | grep "Failed" | grep "invalid user" | awk '{ printf $13 "\n" }' > $IPS_OUTPUT
@@ -63,19 +66,26 @@ for IP in `cat $IPS_SORTED | awk '{print $2}'`
 do
     echo "Checking GeoIP Location for $IP … "
     curl -s http://ipinfo.io/$IP >> $IPS_COUNTRY
-
 done
 
-# Output
+# Save the $IPS_COUNTRY information in this file
+cat $IPS_COUNTRY > $IPS_INFO
 
+# Output to user
 echo ""
 echo "================ COUNTRY OUTPUT ======================="
 echo ""
-
 sed -e 's/}{//g' -e 's/,//g' -e 's/{//' -e 's/}//' -e 's/"//g' $IPS_COUNTRY
+sed -e 's/}{//g' -e 's/,//g' -e 's/{//' -e 's/}//' -e 's/"//g' $IPS_COUNTRY > $IPS_INFO
+
+# Cleaning files
+/bin/rm -rf $IPS_COUNTRY
+/bin/rm -rf $IPS_SORTED
+/bin/rm -rf $IPS_OUTPUT
 
 echo ""
 echo "======================================================="
+
 }
 
 #
