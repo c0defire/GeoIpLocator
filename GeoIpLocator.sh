@@ -11,7 +11,7 @@
 #
 # Gets the IP's from your auth.log file, change log file as necessary, user info
 USER=pi
-LOG=/var/log/auth.log
+LOG=/var/log/auth.log*
 IPS_OUTPUT=/home/$USER/GeoIpLocator/geoIP.txt
 IPS_SORTED=/home/$USER/GeoIpLocator/sortedips.txt
 IPS_COUNTRY=/home/$USER/GeoIpLocator/country.txt
