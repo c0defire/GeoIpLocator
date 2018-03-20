@@ -47,44 +47,55 @@ EOF
 
 
 # Function Main - Contains your main instructions
+
 function main()
 {
 
 echo "Checking your $LOG files for failed attempts ..."
 FAILED_ATTEMPTS=$(sudo cat /var/log/auth.log* | grep "Failed" | cat -n | awk '{ printf $1 "\n" }' | tail -1)
-echo ""
-echo "A total of $FAILED_ATTEMPTS failed attempts were found, sorting common IPs ..."
-echo ""
 
 sudo cat $LOG | grep "Failed" | grep "invalid user" | awk '{ printf $13 "\n" }' > $IPS_OUTPUT
 
-# Organize IPs by most common
-cat $IPS_OUTPUT | sort | uniq -c > $IPS_SORTED
+if [ ! -s $IPS_OUTPUT ]
+then
+    echo
+    echo "------------------------------------------------------------"
+    echo "No intruders detected in $LOG"
+    echo "------------------------------------------------------------"
+    echo
+else
+    echo ""
+    echo "A total of $FAILED_ATTEMPTS failed attempts were found, sorting common IPs ..."
+    echo ""
 
-# Look up their country
-for IP in `cat $IPS_SORTED | awk '{print $2}'`
-do
-    echo "Checking GeoIP Location for $IP … "
-    curl -s http://ipinfo.io/$IP >> $IPS_COUNTRY
-done
+    # Organize IPs by most common
+    cat $IPS_OUTPUT | sort | uniq -c > $IPS_SORTED
 
-# Save the $IPS_COUNTRY information in this file
-cat $IPS_COUNTRY > $IPS_INFO
+    # Look up their country
+    for IP in `cat $IPS_SORTED | awk '{print $2}'`
+    do
+        echo "Checking GeoIP Location for $IP … "
+        curl -s http://ipinfo.io/$IP >> $IPS_COUNTRY
+    done
 
-# Output to user
-echo ""
-echo "================ COUNTRY OUTPUT ======================="
-echo ""
-sed -e 's/}{//g' -e 's/,//g' -e 's/{//' -e 's/}//' -e 's/"//g' $IPS_COUNTRY
-sed -e 's/}{//g' -e 's/,//g' -e 's/{//' -e 's/}//' -e 's/"//g' $IPS_COUNTRY > $IPS_INFO
+    # Save the $IPS_COUNTRY information in this file
+    cat $IPS_COUNTRY > $IPS_INFO
 
-# Cleaning files
-/bin/rm -rf $IPS_COUNTRY
-/bin/rm -rf $IPS_SORTED
-/bin/rm -rf $IPS_OUTPUT
+    # Output to user
+    echo ""
+    echo "================ COUNTRY OUTPUT ======================="
+    echo ""
+    sed -e 's/}{//g' -e 's/,//g' -e 's/{//' -e 's/}//' -e 's/"//g' $IPS_COUNTRY
+    sed -e 's/}{//g' -e 's/,//g' -e 's/{//' -e 's/}//' -e 's/"//g' $IPS_COUNTRY > $IPS_INFO
 
-echo ""
-echo "======================================================="
+    # Cleaning files
+    /bin/rm -rf $IPS_COUNTRY
+    /bin/rm -rf $IPS_SORTED
+    /bin/rm -rf $IPS_OUTPUT
+
+    echo ""
+    echo "======================================================="
+fi
 
 }
 
